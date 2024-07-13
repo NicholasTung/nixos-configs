@@ -9,9 +9,10 @@
 	  agenix.inputs.darwin.follows = "";
   };
 
-  outputs = { self, nixpkgs, impermanence, ... }: {
-    nixosConfigurations.TODO = nixpkgs.lib.nixosSystem {
+  outputs = { self, nixpkgs, impermanence, agenix, ... }: {
+    nixosConfigurations.agrotera = nixpkgs.lib.nixosSystem {
       system = "x86_64-linux";
+      specialArgs = { inherit agenix; };
       modules = [
         impermanence.nixosModules.impermanence
         agenix.nixosModules.default
