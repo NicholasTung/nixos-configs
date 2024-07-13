@@ -86,11 +86,12 @@
     };
 
   fileSystems."/boot" =
-    { device = "/dev/disk/by-uuid/TODO";
+    { device = "/dev/disk/by-uuid/E9D7-CEAC";
       fsType = "vfat";
+      options = [ "fmask=0077" "dmask=0077" ];
     };
 
-  swapDevices = [ { label = "swap"; } ];
+  swapDevices = [ { device = "/dev/disk/by-uuid/5c4deab1-b540-4dc7-a64c-c2817aa59488"; } ];
   
   boot.supportedFilesystems.zfs = true;
   # see https://search.nixos.org/options?channel=24.05&show=boot.zfs.forceImportRoot&from=0&size=50&sort=relevance&type=packages&query=boot.zfs
