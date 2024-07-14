@@ -15,8 +15,10 @@
   
   ## from https://xeiaso.net/blog/paranoid-nixos-2021-07-18/
   security.sudo.execWheelOnly = true;
+
+  security.sudo.wheelNeedsPassword = false;
   
-  nix.allowedUsers = [ "@wheel" ];
+  nix.settings.allowed-users = [ "@wheel" ];
 
   ## from https://xeiaso.net/blog/paranoid-nixos-2021-07-18/
   services.openssh = {
@@ -152,11 +154,11 @@
 		{ device = "/dev/disk/by-uuid/3b5c2d01-78ad-4a31-993c-0d4b6d5edef5";
 			fsType = "ext4";
 		};
-	fileSystems."/mnt/disk/wd" =
+	fileSystems."/mnt/disks/seagate" =
 		{ device = "/dev/disk/by-uuid/507c5918-f81f-470a-9bac-36d4f6b883d2";
 			fsType = "ext4";
 		};
-	fileSystems."/mnt/disk/seagate" =
+	fileSystems."/mnt/disks/wd" =
 		{ device = "/dev/disk/by-uuid/5440af94-46b8-4108-8aff-e365173b052e";
 			fsType = "ext4";
 		};
