@@ -55,7 +55,7 @@
   environment.systemPackages = with pkgs; [
 	  git
 	  vim
-	  rg
+	  ripgrep
 	  mergerfs
 	  rsync
     agenix.packages.${pkgs.system}.agenix
