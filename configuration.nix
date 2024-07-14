@@ -1,4 +1,4 @@
-{ config, pkgs, lib, ... }: {
+{ config, pkgs, lib, agenix, ... }: {
 	imports = 
 		[ # Include the results of the hardware scan.
 			./hardware-configuration.nix
