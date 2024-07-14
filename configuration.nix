@@ -51,7 +51,7 @@
 	};
 
   environment.defaultPackages = lib.mkForce [];
-  environment.systemPackages = with pkgs [
+  environment.systemPackages = with pkgs; [
 	  git
 	  vim
 	  rg
