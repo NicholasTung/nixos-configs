@@ -11,6 +11,7 @@
   time.timeZone = "America/New_York";
   
   networking.hostName = "agrotera";
+  networking.hostId = "00000001";
   
   ## from https://xeiaso.net/blog/paranoid-nixos-2021-07-18/
   security.sudo.execWheelOnly = true;
