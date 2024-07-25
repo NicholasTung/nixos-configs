@@ -1,8 +1,8 @@
 { config, pkgs, lib, agenix, ... }: {
-	imports = 
-		[ # Include the results of the hardware scan.
-			./hardware-configuration.nix
-		];
+  imports = 
+    [ # Include the results of the hardware scan.
+      ./hardware-configuration.nix
+    ];
 
   boot.loader.systemd-boot.enable = true;
   
@@ -17,6 +17,9 @@
   security.sudo.execWheelOnly = true;
 
   security.sudo.wheelNeedsPassword = false;
+
+  # TODO FIX MEEEE
+  age.secrets.ts_auth.file = ./secrets/ts_auth.age;
   
   nix.settings.allowed-users = [ "@wheel" ];
 
@@ -38,36 +41,40 @@
   };
 
   # disable creation of new users at runtime
-	users.mutableUsers = false;
-	users.users.nicholast = {
-	 isNormalUser = true;
-	 extraGroups = [ "wheel" ];
-	 
-	 # disables logging in to this user using a password altogether
-	 # this defaults to null, but i'll state it anyway
-	 # see https://search.nixos.org/options?channel=24.05&show=users.users.%3Cname%3E.hashedPassword
-	 hashedPassword = null;
-	 
-	 openssh.authorizedKeys.keys = 
-		 [ "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAILRpk45aMtMZY+9MAysPHaWZA3hEPsB2feQUUz3Cn1mU mbp"
-		 ];
-	};
+  users.mutableUsers = false;
+  users.users.nicholast = {
+   isNormalUser = true;
+   extraGroups = [ "wheel" ];
+   
+   # disables logging in to this user using a password altogether
+   # this defaults to null, but i'll state it anyway
+   # see https://search.nixos.org/options?channel=24.05&show=users.users.%3Cname%3E.hashedPassword
+   hashedPassword = null;
+   
+   openssh.authorizedKeys.keys = 
+     [ "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAILRpk45aMtMZY+9MAysPHaWZA3hEPsB2feQUUz3Cn1mU mbp"
+     ];
+  };
 
   environment.defaultPackages = lib.mkForce [];
   environment.systemPackages = with pkgs; [
-	  git
-	  vim
-	  ripgrep
-	  mergerfs
-	  rsync
+    git
+    vim
+    ripgrep
+    mergerfs
+    rsync
     agenix.packages.${pkgs.system}.agenix
   ];
 
+  services.tailscale.enable = true;
+  services.tailscale.authKeyFile = config.age.secrets.ts_auth.path;
+
   networking.firewall.enable = true;
-	networking.firewall.allowedTCPPorts = [ 22 ];
+  networking.firewall.allowedTCPPorts = [ 22 ];
+  networking.firewall.trustedInterfaces = [ "tailscale0" ];
 
   ## boot disk configuration
-	fileSystems."/" =
+  fileSystems."/" =
     { device = "rpool/root";
       fsType = "zfs";
     };
@@ -89,12 +96,14 @@
     };
 
   fileSystems."/boot" =
-    { device = "/dev/disk/by-uuid/E9D7-CEAC";
+    { device = "/dev/disk/by-uuid/0632-1869";
       fsType = "vfat";
       options = [ "fmask=0077" "dmask=0077" ];
     };
 
-  swapDevices = [ { device = "/dev/disk/by-uuid/5c4deab1-b540-4dc7-a64c-c2817aa59488"; } ];
+  swapDevices =
+    [ { device = "/dev/disk/by-uuid/9ad578cd-8df9-4186-82e7-eca235f1aec8"; }
+    ];
   
   boot.supportedFilesystems.zfs = true;
   # see https://search.nixos.org/options?channel=24.05&show=boot.zfs.forceImportRoot&from=0&size=50&sort=relevance&type=packages&query=boot.zfs
@@ -135,67 +144,73 @@
   };
 
   services.sanoid = {
-	  enable = true;
-	  templates.backup = {
-	    hourly = 36;
-	    daily = 30;
-	    monthly = 3;
-	    autoprune = true;
-	    autosnap = true;
-	  };
-	
-	  datasets."rpool/safe" = {
-	    useTemplate = [ "backup" ];
-	    recursive = true;
-	  };
-	};
+    enable = true;
+    templates.backup = {
+      hourly = 36;
+      daily = 30;
+      monthly = 3;
+      autoprune = true;
+      autosnap = true;
+    };
+  
+    datasets."rpool/safe" = {
+      useTemplate = [ "backup" ];
+      recursive = true;
+    };
+  };
 
   fileSystems."/mnt/disks/internal" =
-		{ device = "/dev/disk/by-uuid/3b5c2d01-78ad-4a31-993c-0d4b6d5edef5";
-			fsType = "ext4";
-		};
-	fileSystems."/mnt/disks/seagate" =
-		{ device = "/dev/disk/by-uuid/507c5918-f81f-470a-9bac-36d4f6b883d2";
-			fsType = "ext4";
-		};
-	fileSystems."/mnt/disks/wd" =
-		{ device = "/dev/disk/by-uuid/5440af94-46b8-4108-8aff-e365173b052e";
-			fsType = "ext4";
-		};
-	fileSystems."/storage" = 
-		{ device = "/mnt/disks/*";
-		  fsType = "fuse.mergerfs";
-		  options = [
-			  "defaults"
-			  "cache.files=off"
-			  "moveonenospc=true"
-			  "dropcacheonclose=true"
-			  "minfreespace=200G"
-			 ];
-		 };
+    { device = "/dev/disk/by-uuid/3b5c2d01-78ad-4a31-993c-0d4b6d5edef5";
+      fsType = "ext4";
+    };
+  fileSystems."/mnt/disks/seagate" =
+    { device = "/dev/disk/by-uuid/507c5918-f81f-470a-9bac-36d4f6b883d2";
+      fsType = "ext4";
+    };
+  fileSystems."/mnt/disks/wd" =
+    { device = "/dev/disk/by-uuid/5440af94-46b8-4108-8aff-e365173b052e";
+      fsType = "ext4";
+    };
+  fileSystems."/storage" = 
+    { device = "/mnt/disks/*";
+      fsType = "fuse.mergerfs";
+      options = [
+        "defaults"
+        "cache.files=off"
+        "moveonenospc=true"
+        "dropcacheonclose=true"
+        "minfreespace=200G"
+       ];
+     };
 
   environment.persistence."/persist" = {
-		directories = 
-			# recommended by the NixOS Manual
-			[ "/var/lib/nixos"
-				"/var/lib/systemd"
-				"/var/log/journal"
-				
-				# /var/tmp is supposed to be persisted between boots, apparently
-				"/var/tmp"
-			];
-		files = 
-			# recommended by the NixOS Manual
-			[ "/etc/zfs/zpool.cache"
-				"/etc/machine-id"
-				
-				# for ssh service
-				"/etc/ssh/ssh_host_ed25519_key"
-	      "/etc/ssh/ssh_host_ed25519_key.pub"
-	      "/etc/ssh/ssh_host_rsa_key"
-	      "/etc/ssh/ssh_host_rsa_key.pub"
-			];
-	};
+    directories = 
+      # recommended by the NixOS Manual
+      [ "/var/lib/nixos"
+        "/var/lib/systemd"
+        "/var/log/journal"
+        
+        # /var/tmp is supposed to be persisted between boots, apparently
+        "/var/tmp"
+
+        # persist tailscale state
+        "/var/lib/tailscale"
+
+        # persist system configuration
+        "/etc/nixos"
+      ];
+    files = 
+      # recommended by the NixOS Manual
+      [ "/etc/zfs/zpool.cache"
+        "/etc/machine-id"
+        
+        # for ssh service
+        "/etc/ssh/ssh_host_ed25519_key"
+        "/etc/ssh/ssh_host_ed25519_key.pub"
+        "/etc/ssh/ssh_host_rsa_key"
+        "/etc/ssh/ssh_host_rsa_key.pub"
+      ];
+  };
 
   # This option defines the first version of NixOS you have installed on this particular machine,
   # and is used to maintain compatibility with application data (e.g. databases) created on older NixOS versions.
@@ -214,5 +229,5 @@
   # and migrated your data accordingly.
   #
   # For more information, see `man configuration.nix` or https://nixos.org/manual/nixos/stable/options#opt-system.stateVersion .
-  system.stateVersion = "${config.system.nixos.release}"; # Did you read the comment?
+  system.stateVersion = "24.05"; # Did you read the comment?
 }
