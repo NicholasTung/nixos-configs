@@ -18,7 +18,6 @@
 
   security.sudo.wheelNeedsPassword = false;
 
-  # TODO FIX MEEEE
   age.secrets.ts_auth.file = ./secrets/ts_auth.age;
   
   nix.settings.allowed-users = [ "@wheel" ];
