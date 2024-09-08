@@ -2,6 +2,7 @@
   imports = 
     [ # Include the results of the hardware scan.
       ./hardware-configuration.nix
+      ./services
     ];
 
   boot.loader.systemd-boot.enable = true;
@@ -17,8 +18,6 @@
   security.sudo.execWheelOnly = true;
 
   security.sudo.wheelNeedsPassword = false;
-
-  age.secrets.ts_auth.file = ./secrets/ts_auth.age;
   
   nix.settings.allowed-users = [ "@wheel" ];
 
@@ -42,17 +41,17 @@
   # disable creation of new users at runtime
   users.mutableUsers = false;
   users.users.nicholast = {
-   isNormalUser = true;
-   extraGroups = [ "wheel" ];
-   
-   # disables logging in to this user using a password altogether
-   # this defaults to null, but i'll state it anyway
-   # see https://search.nixos.org/options?channel=24.05&show=users.users.%3Cname%3E.hashedPassword
-   hashedPassword = null;
-   
-   openssh.authorizedKeys.keys = 
-     [ "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAILRpk45aMtMZY+9MAysPHaWZA3hEPsB2feQUUz3Cn1mU mbp"
-     ];
+    isNormalUser = true;
+    extraGroups = [ "wheel" ];
+    
+    # disables logging in to this user using a password altogether
+    # this defaults to null, but i'll state it anyway
+    # see https://search.nixos.org/options?channel=24.05&show=users.users.%3Cname%3E.hashedPassword
+    hashedPassword = null;
+    
+    openssh.authorizedKeys.keys = [
+      "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAILRpk45aMtMZY+9MAysPHaWZA3hEPsB2feQUUz3Cn1mU mbp"
+    ];
   };
 
   environment.defaultPackages = lib.mkForce [];
@@ -65,44 +64,37 @@
     agenix.packages.${pkgs.system}.agenix
   ];
 
-  services.tailscale.enable = true;
-  services.tailscale.authKeyFile = config.age.secrets.ts_auth.path;
-
-  networking.firewall.enable = true;
-  networking.firewall.allowedTCPPorts = [ 22 ];
-  networking.firewall.trustedInterfaces = [ "tailscale0" ];
-
   ## boot disk configuration
-  fileSystems."/" =
-    { device = "rpool/root";
-      fsType = "zfs";
-    };
+  fileSystems."/" = {
+    device = "rpool/root";
+    fsType = "zfs";
+  };
 
-  fileSystems."/nix" =
-    { device = "rpool/nix";
-      fsType = "zfs";
-    };
+  fileSystems."/nix" = {
+    device = "rpool/nix";
+    fsType = "zfs";
+  };
 
-  fileSystems."/home" =
-    { device = "rpool/safe/home";
-      fsType = "zfs";
-    };
+  fileSystems."/home" = {
+    device = "rpool/safe/home";
+    fsType = "zfs";
+  };
   
-  fileSystems."/persist" =
-    { device = "rpool/safe/persist";
-      fsType = "zfs";
-      neededForBoot = true;
-    };
+  fileSystems."/persist" = {
+    device = "rpool/safe/persist";
+    fsType = "zfs";
+    neededForBoot = true;
+  };
 
-  fileSystems."/boot" =
-    { device = "/dev/disk/by-uuid/0632-1869";
-      fsType = "vfat";
-      options = [ "fmask=0077" "dmask=0077" ];
-    };
+  fileSystems."/boot" = {
+    device = "/dev/disk/by-uuid/0632-1869";
+    fsType = "vfat";
+    options = [ "fmask=0077" "dmask=0077" ];
+  };
 
-  swapDevices =
-    [ { device = "/dev/disk/by-uuid/9ad578cd-8df9-4186-82e7-eca235f1aec8"; }
-    ];
+  swapDevices = [
+    { device = "/dev/disk/by-uuid/9ad578cd-8df9-4186-82e7-eca235f1aec8"; }
+  ];
   
   boot.supportedFilesystems.zfs = true;
   # see https://search.nixos.org/options?channel=24.05&show=boot.zfs.forceImportRoot&from=0&size=50&sort=relevance&type=packages&query=boot.zfs
@@ -118,12 +110,12 @@
         ACTION=="add|change", KERNEL=="sd[a-z]*[0-9]*|mmcblk[0-9]*p[0-9]*|nvme[0-9]*n[0-9]*p[0-9]*", ENV{ID_FS_TYPE}=="zfs_member", ATTR{../queue/scheduler}="none"
       '';
   
+  # https://discourse.nixos.org/t/zfs-rollback-not-working-using-boot-initrd-systemd/37195/3
   boot.initrd.kernelModules = [ "zfs" ];
   boot.initrd.systemd.enable = true;
   boot.initrd.systemd.services.rollback = {
     description = "Rollback root filesystem to a pristine state on boot";
     wantedBy = [
-      # "zfs.target"
       "initrd.target"
     ];
     after = [
@@ -158,58 +150,102 @@
     };
   };
 
-  fileSystems."/mnt/disks/internal" =
-    { device = "/dev/disk/by-uuid/3b5c2d01-78ad-4a31-993c-0d4b6d5edef5";
-      fsType = "ext4";
-    };
-  fileSystems."/mnt/disks/seagate" =
-    { device = "/dev/disk/by-uuid/507c5918-f81f-470a-9bac-36d4f6b883d2";
-      fsType = "ext4";
-    };
-  fileSystems."/mnt/disks/wd" =
-    { device = "/dev/disk/by-uuid/5440af94-46b8-4108-8aff-e365173b052e";
-      fsType = "ext4";
-    };
-  fileSystems."/storage" = 
-    { device = "/mnt/disks/*";
-      fsType = "fuse.mergerfs";
-      options = [
-        "defaults"
-        "cache.files=off"
-        "moveonenospc=true"
-        "dropcacheonclose=true"
-        "minfreespace=200G"
-       ];
-     };
+  fileSystems."/mnt/disks/internal" = {
+    device = "/dev/disk/by-uuid/3b5c2d01-78ad-4a31-993c-0d4b6d5edef5";
+    fsType = "ext4";
+  };
+  fileSystems."/mnt/disks/seagate" = {
+    device = "/dev/disk/by-uuid/507c5918-f81f-470a-9bac-36d4f6b883d2";
+    fsType = "ext4";
+  };
+  fileSystems."/mnt/disks/wd" = {
+    device = "/dev/disk/by-uuid/5440af94-46b8-4108-8aff-e365173b052e";
+    fsType = "ext4";
+  };
+  fileSystems."/mnt/storage" = {
+    device = "/mnt/disks/*";
+    fsType = "fuse.mergerfs";
+    options = [
+      "defaults"
+      "cache.files=partial"
+      "moveonenospc=true"
+      "dropcacheonclose=true"
+      "minfreespace=200G"
+    ];
+  };
 
   environment.persistence."/persist" = {
-    directories = 
+    directories = [
       # recommended by the NixOS Manual
-      [ "/var/lib/nixos"
-        "/var/lib/systemd"
-        "/var/log/journal"
-        
-        # /var/tmp is supposed to be persisted between boots, apparently
-        "/var/tmp"
+      "/var/lib/nixos"
+      "/var/lib/systemd"
+      "/var/log/journal"
+      
+      # /var/tmp is supposed to be persisted between boots, apparently
+      "/var/tmp"
 
-        # persist tailscale state
-        "/var/lib/tailscale"
+      # tailscale state
+      "/var/lib/tailscale"
 
-        # persist system configuration
-        "/etc/nixos"
-      ];
-    files = 
+      # system configuration
+      "/etc/nixos"
+    ];
+    files = [
       # recommended by the NixOS Manual
-      [ "/etc/zfs/zpool.cache"
-        "/etc/machine-id"
-        
-        # for ssh service
-        "/etc/ssh/ssh_host_ed25519_key"
-        "/etc/ssh/ssh_host_ed25519_key.pub"
-        "/etc/ssh/ssh_host_rsa_key"
-        "/etc/ssh/ssh_host_rsa_key.pub"
-      ];
+      "/etc/zfs/zpool.cache"
+      "/etc/machine-id"
+      
+      # for ssh service
+      "/etc/ssh/ssh_host_ed25519_key"
+      "/etc/ssh/ssh_host_ed25519_key.pub"
+      "/etc/ssh/ssh_host_rsa_key"
+      "/etc/ssh/ssh_host_rsa_key.pub"
+    ];
   };
+
+  # workaround ensures that ssh keys are available when agenix tries to decrypt secrets
+  # it does this by pointing directly to the keys in /persist
+  # see https://github.com/ryantm/agenix/issues/45#issuecomment-1716862823
+  # TODO (nicholast): not great that the persist top level directory is hard coded
+  age.identityPaths = [
+    "/persist/etc/ssh/ssh_host_ed25519_key"
+    "/persist/etc/ssh/ssh_host_rsa_key"
+  ];
+
+  age.secrets.ts_auth.file = ./secrets/ts_auth.age;
+  services.tailscale.enable = true;
+  services.tailscale.authKeyFile = config.age.secrets.ts_auth.path;
+
+  networking.firewall.enable = true;
+  networking.firewall.allowedTCPPorts = [ 22 ];
+  networking.firewall.trustedInterfaces = [ "tailscale0" ];
+
+  # nvidia things
+  nixpkgs.config.allowUnfree = true;
+  services.xserver.videoDrivers = ["nvidia"];
+  hardware.graphics.enable = true;
+
+  hardware.nvidia = {
+    # NixOS wiki
+    modesetting.enable = true;
+    powerManagement.enable = false;
+    powerManagement.finegrained = false;
+    open = false;
+    nvidiaSettings = true;
+    package = config.boot.kernelPackages.nvidiaPackages.production;
+
+    prime = {
+      # sudo lshw -c display
+      nvidiaBusId = "PCI:1:0:0";
+
+      # somehow, no iGPU detected so disable prime
+      sync.enable = false;
+    };
+
+    # keep GPU awake in headless mode
+    nvidiaPersistenced = true;
+  };
+
 
   # This option defines the first version of NixOS you have installed on this particular machine,
   # and is used to maintain compatibility with application data (e.g. databases) created on older NixOS versions.
