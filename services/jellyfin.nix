@@ -18,7 +18,7 @@
   # TODO (nicholast): factor out hardcoded persistence path
   environment.persistence."/persist" = {
     directories = [
-      { 
+      {
         directory = "/srv/jellyfin/jellyfin";
         user = "jellyfin";
         group = "jellyfin";

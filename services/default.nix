@@ -1,7 +1,7 @@
 {
-    imports = [
-        ./golink.nix
-        ./jellyfin.nix
-        ./prometheus.nix
-    ];
+  imports = [
+    ./golink.nix
+    ./jellyfin.nix
+    ./prometheus.nix
+  ];
 }

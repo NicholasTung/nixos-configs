@@ -1,24 +1,25 @@
 { config, pkgs, lib, agenix, ... }: {
-  imports = 
-    [ # Include the results of the hardware scan.
+  imports =
+    [
+      # Include the results of the hardware scan.
       ./hardware-configuration.nix
       ./services
     ];
 
   boot.loader.systemd-boot.enable = true;
-  
+
   nix.settings.experimental-features = [ "nix-command" "flakes" ];
-  
+
   time.timeZone = "America/New_York";
-  
+
   networking.hostName = "agrotera";
   networking.hostId = "00000001";
-  
+
   ## from https://xeiaso.net/blog/paranoid-nixos-2021-07-18/
   security.sudo.execWheelOnly = true;
 
   security.sudo.wheelNeedsPassword = false;
-  
+
   nix.settings.allowed-users = [ "@wheel" ];
 
   ## from https://xeiaso.net/blog/paranoid-nixos-2021-07-18/
@@ -43,18 +44,18 @@
   users.users.nicholast = {
     isNormalUser = true;
     extraGroups = [ "wheel" ];
-    
+
     # disables logging in to this user using a password altogether
     # this defaults to null, but i'll state it anyway
     # see https://search.nixos.org/options?channel=24.05&show=users.users.%3Cname%3E.hashedPassword
     hashedPassword = null;
-    
+
     openssh.authorizedKeys.keys = [
       "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAILRpk45aMtMZY+9MAysPHaWZA3hEPsB2feQUUz3Cn1mU mbp"
     ];
   };
 
-  environment.defaultPackages = lib.mkForce [];
+  environment.defaultPackages = lib.mkForce [ ];
   environment.systemPackages = with pkgs; [
     git
     vim
@@ -79,7 +80,7 @@
     device = "rpool/safe/home";
     fsType = "zfs";
   };
-  
+
   fileSystems."/persist" = {
     device = "rpool/safe/persist";
     fsType = "zfs";
@@ -95,21 +96,21 @@
   swapDevices = [
     { device = "/dev/disk/by-uuid/9ad578cd-8df9-4186-82e7-eca235f1aec8"; }
   ];
-  
+
   boot.supportedFilesystems.zfs = true;
   # see https://search.nixos.org/options?channel=24.05&show=boot.zfs.forceImportRoot&from=0&size=50&sort=relevance&type=packages&query=boot.zfs
   boot.zfs.forceImportRoot = false;
-  
+
   services.zfs.autoScrub.enable = true;
-  
+
   # "Erase your darlings" recommends disabling the disk scheduler when
   # using ZFS in a set up where only part of the disk is ZFS.
   # However, the kernel parameter "elevator=none" has since been deprecated,
   # so I will use this udev rule from https://discourse.nixos.org/t/enable-none-in-the-i-o-scheduler/36566/3
   services.udev.extraRules = ''
-        ACTION=="add|change", KERNEL=="sd[a-z]*[0-9]*|mmcblk[0-9]*p[0-9]*|nvme[0-9]*n[0-9]*p[0-9]*", ENV{ID_FS_TYPE}=="zfs_member", ATTR{../queue/scheduler}="none"
-      '';
-  
+    ACTION=="add|change", KERNEL=="sd[a-z]*[0-9]*|mmcblk[0-9]*p[0-9]*|nvme[0-9]*n[0-9]*p[0-9]*", ENV{ID_FS_TYPE}=="zfs_member", ATTR{../queue/scheduler}="none"
+  '';
+
   # https://discourse.nixos.org/t/zfs-rollback-not-working-using-boot-initrd-systemd/37195/3
   boot.initrd.kernelModules = [ "zfs" ];
   boot.initrd.systemd.enable = true;
@@ -143,7 +144,7 @@
       autoprune = true;
       autosnap = true;
     };
-  
+
     datasets."rpool/safe" = {
       useTemplate = [ "backup" ];
       recursive = true;
@@ -180,7 +181,7 @@
       "/var/lib/nixos"
       "/var/lib/systemd"
       "/var/log/journal"
-      
+
       # /var/tmp is supposed to be persisted between boots, apparently
       "/var/tmp"
 
@@ -194,7 +195,7 @@
       # recommended by the NixOS Manual
       "/etc/zfs/zpool.cache"
       "/etc/machine-id"
-      
+
       # for ssh service
       "/etc/ssh/ssh_host_ed25519_key"
       "/etc/ssh/ssh_host_ed25519_key.pub"
@@ -222,7 +223,7 @@
 
   # nvidia things
   nixpkgs.config.allowUnfree = true;
-  services.xserver.videoDrivers = ["nvidia"];
+  services.xserver.videoDrivers = [ "nvidia" ];
   hardware.graphics.enable = true;
 
   hardware.nvidia = {
