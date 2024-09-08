@@ -1,4 +1,4 @@
-{ config, agenix, ... }: {
+{ config, ... }: {
   age.secrets.grafana_prometheus_remote_write_auth = {
     file = ../secrets/grafana_prometheus_remote_write_auth.age;
     owner = "prometheus";

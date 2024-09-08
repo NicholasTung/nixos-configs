@@ -1,4 +1,4 @@
-{ config, golink, agenix, ... }: {
+{ config, ... }: {
   # TODO (nicholast): factor out hardcoded persistence path
   environment.persistence."/persist" = {
     directories = [
