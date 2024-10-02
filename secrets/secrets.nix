@@ -7,4 +7,5 @@ in
   "ts_auth.age".publicKeys = [ user_mbp system_agrotera ];
   "golink_ts_auth.age".publicKeys = [ user_mbp system_agrotera ];
   "grafana_prometheus_remote_write_auth.age".publicKeys = [ user_mbp system_agrotera ];
+  "grafana_promtail_remote_write_auth.age".publicKeys = [ user_mbp system_agrotera ];
 }
