@@ -33,7 +33,9 @@
         job_name = "system";
         static_configs = [
           {
-            targets = "localhost";
+            targets = [
+              "localhost"
+            ];
             labels = {
               job = "varlogs";
               __path__ = "/var/log/*.log";
