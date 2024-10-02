@@ -247,6 +247,11 @@
     nvidiaPersistenced = true;
   };
 
+  # laptop has been mysteriously and intermittently shutting down,
+  # and the logs say that systemd-logind thought that the power button
+  # was short-pressed. ignore the power key short-press here.
+  services.logind.powerKey = "ignore";
+
 
   # This option defines the first version of NixOS you have installed on this particular machine,
   # and is used to maintain compatibility with application data (e.g. databases) created on older NixOS versions.

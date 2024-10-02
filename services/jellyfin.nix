@@ -33,5 +33,4 @@
     cacheDir = "/srv/jellyfin/jellyfin/cache";
     openFirewall = true;
   };
-
 }
