@@ -10,6 +10,7 @@
   # written based on: 
   # - grafana-generated config.yaml when setting up hosted logs connection
   # - https://grafana.com/docs/loki/latest/send-data/promtail/configuration/#clients
+  # - https://xeiaso.net/blog/prometheus-grafana-loki-nixos-2020-11-20/
   services.promtail.configuration = {
     server = {
       http_listen_port = 0;
@@ -31,17 +32,13 @@
     scrape_configs = [
       {
         job_name = "system";
-        static_configs = [
-          {
-            targets = [
-              "localhost"
-            ];
-            labels = {
-              job = "varlogs";
-              __path__ = "/var/log/*.log";
-            };
-          }
-        ];
+        journal = {
+          max_age = "12h";
+          labels = {
+            job = "systemd-journal";
+            host = "agrotera";
+          };
+        };
       }
     ];
   };
