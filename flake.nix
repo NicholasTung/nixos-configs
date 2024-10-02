@@ -49,14 +49,20 @@
     }
     # slightly funny, merge devShell attrset with outputs
     // flake-utils.lib.eachDefaultSystem (system:
-    let pkgs = nixpkgs.legacyPackages.${system}; in
+    let
+      pkgs = nixpkgs.legacyPackages.${system};
+    in
     {
-      devShell =
-        pkgs.mkShell {
+      devShells = {
+        default = pkgs.mkShell {
           packages = with pkgs; [
             nil # linter
             nixpkgs-fmt
+
+            agenix.packages.${system}.default
+            deploy-rs.packages.${system}.default
           ];
         };
+      };
     });
 }
